@@ -5,6 +5,9 @@ const ASSETS = [
   new URL('index.html', appRoot).href,
   new URL('manifest.webmanifest', appRoot).href,
   new URL('icon.svg', appRoot).href,
+  new URL('icon-192.png', appRoot).href,
+  new URL('icon-512.png', appRoot).href,
+  new URL('apple-touch-icon.png', appRoot).href,
 ];
 
 self.addEventListener('install', (event) => {

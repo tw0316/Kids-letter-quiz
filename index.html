@@ -10,7 +10,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="icon.svg">
+<link rel="icon" href="icon-192.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>What Letter Is This?</title>
 <style>
   :root {
@@ -513,14 +514,15 @@
 
   function nextLetter(shouldSpeak = false) {
     decayRetryQueue();
+    let followUpMessage = '';
 
     if (missedOnlyOpt.checked) {
       const choices = [...missedLetters].filter((letter) => letter !== current);
       if (choices.length === 0 && missedLetters.size > 0) choices.push(...missedLetters);
       if (choices.length === 0) {
-        setMessage('No missed letters yet. Turn off Missed only to keep going.');
         missedOnlyOpt.checked = false;
         saveOption('missedOnly', false);
+        followUpMessage = 'No missed letters yet. Keep playing to build a missed list.';
       } else {
         current = randomizeOpt.checked ? choices[Math.floor(Math.random() * choices.length)] : choices.sort()[0];
         currentIsRetry = true;
@@ -536,6 +538,7 @@
       current = takeRetryLetter();
       currentIsRetry = true;
       renderCurrent(shouldSpeak);
+      if (followUpMessage) setMessage(followUpMessage);
       return;
     }
 
@@ -548,6 +551,7 @@
     current = bag.pop();
     currentIsRetry = false;
     renderCurrent(shouldSpeak);
+    if (followUpMessage) setMessage(followUpMessage);
   }
 
   function markCorrect() {
@@ -640,11 +644,28 @@
   });
 
   missedOnlyOpt.addEventListener('change', () => {
+    if (missedOnlyOpt.checked && missedLetters.size === 0) {
+      missedOnlyOpt.checked = false;
+      saveOption('missedOnly', false);
+      setMessage('No missed letters yet. Keep playing to build a missed list.');
+      return;
+    }
+
     saveOption('missedOnly', missedOnlyOpt.checked);
     nextLetter(false);
   });
 
+  function isInteractiveTarget(target) {
+    if (!target) return false;
+    return ['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName) || target.isContentEditable;
+  }
+
   document.addEventListener('keydown', (e) => {
+    if (isInteractiveTarget(e.target)) {
+      if (e.code === 'Escape') celebrationEl.hidden = true;
+      return;
+    }
+
     if (e.code === 'ArrowRight') {
       e.preventDefault();
       markCorrect();
