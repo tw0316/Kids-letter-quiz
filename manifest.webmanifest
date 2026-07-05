@@ -1,0 +1,19 @@
+{
+  "name": "What Letter Is This?",
+  "short_name": "Letter Quiz",
+  "description": "A lightweight alphabet quiz for practicing letters, words, and sounds.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffecd2",
+  "theme_color": "#ffb199",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
