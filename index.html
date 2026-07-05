@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>What Letter Is This?</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 50%, #a1c4fd 100%);
+    overflow: hidden;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+  }
+  h1 {
+    margin: 0 0 6px;
+    color: #444;
+    font-size: 1.6rem;
+    text-align: center;
+  }
+  .card {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: min(4vw, 40px);
+    flex-wrap: wrap;
+    padding: 0 20px;
+  }
+  #letter {
+    font-size: min(45vw, 45vh);
+    font-weight: 900;
+    line-height: 1;
+    color: #2c3e50;
+    text-shadow: 4px 6px 0 rgba(0,0,0,0.08);
+    cursor: pointer;
+  }
+  #emoji {
+    font-size: min(35vw, 35vh);
+    line-height: 1;
+    cursor: pointer;
+  }
+  #letter.pop, #emoji.pop {
+    animation: pop 0.4s ease;
+  }
+  @keyframes pop {
+    0%   { transform: scale(0.5) rotate(-8deg); opacity: 0; }
+    60%  { transform: scale(1.15) rotate(3deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0deg);    opacity: 1; }
+  }
+  #word {
+    font-size: 2.2rem;
+    font-weight: bold;
+    color: #2c3e50;
+    margin-top: 4px;
+    text-align: center;
+  }
+  .controls {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 14px;
+  }
+  button {
+    font-size: 1.25rem;
+    padding: 14px 28px;
+    border: none;
+    border-radius: 999px;
+    background: #ff7f50;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #c85a2f;
+    transition: transform 0.08s ease;
+  }
+  button:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 #c85a2f;
+  }
+  button.secondary {
+    background: #4a90e2;
+    box-shadow: 0 4px 0 #2a6dbf;
+  }
+  button.correct {
+    background: #4caf50;
+    box-shadow: 0 4px 0 #2e7d32;
+  }
+  button.incorrect {
+    background: #e74c3c;
+    box-shadow: 0 4px 0 #a8321f;
+  }
+  .hint {
+    margin-top: 12px;
+    color: #555;
+    font-size: 0.9rem;
+    text-align: center;
+    padding: 0 10px;
+  }
+  .options {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 10px;
+    padding: 0 10px;
+  }
+  .options label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #444;
+    font-size: 1rem;
+    background: rgba(255,255,255,0.65);
+    padding: 6px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .options input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+  }
+  #score {
+    position: fixed;
+    top: 12px;
+    right: 16px;
+    font-size: 1.1rem;
+    color: #444;
+    background: rgba(255,255,255,0.6);
+    padding: 6px 14px;
+    border-radius: 999px;
+  }
+</style>
+</head>
+<body>
+  <div id="score">✓ 0 &nbsp; ✗ 0</div>
+  <h1>What letter is this?</h1>
+  <div class="card">
+    <div id="letter">A</div>
+    <div id="emoji">🍎</div>
+  </div>
+  <div id="word">Apple</div>
+  <div class="controls">
+    <button id="correctBtn" class="correct">✓ Correct</button>
+    <button id="incorrectBtn" class="incorrect">✗ Incorrect</button>
+    <button id="sayBtn" class="secondary">Say It</button>
+  </div>
+  <div class="hint">Press <b>&rarr;</b> for correct, <b>&larr;</b> for incorrect.</div>
+  <div class="options">
+    <label><input type="checkbox" id="randomizeOpt"> Randomize order</label>
+    <label><input type="checkbox" id="reintroduceOpt" checked> Reintroduce missed letters</label>
+  </div>
+
+<script>
+  const letterEl = document.getElementById('letter');
+  const emojiEl  = document.getElementById('emoji');
+  const wordEl   = document.getElementById('word');
+  const correctBtn = document.getElementById('correctBtn');
+  const incorrectBtn = document.getElementById('incorrectBtn');
+  const sayBtn   = document.getElementById('sayBtn');
+  const scoreEl  = document.getElementById('score');
+  const randomizeOpt = document.getElementById('randomizeOpt');
+  const reintroduceOpt = document.getElementById('reintroduceOpt');
+
+  const LETTER_WORDS = {
+    A: { emoji: '🍎', word: 'Apple' },
+    B: { emoji: '⚽', word: 'Ball' },
+    C: { emoji: '🐱', word: 'Cat' },
+    D: { emoji: '🐶', word: 'Dog' },
+    E: { emoji: '🐘', word: 'Elephant' },
+    F: { emoji: '🐟', word: 'Fish' },
+    G: { emoji: '🦒', word: 'Giraffe' },
+    H: { emoji: '🎩', word: 'Hat' },
+    I: { emoji: '🍦', word: 'Ice cream' },
+    J: { emoji: '🧃', word: 'Juice' },
+    K: { emoji: '🪁', word: 'Kite' },
+    L: { emoji: '🦁', word: 'Lion' },
+    M: { emoji: '🐵', word: 'Monkey' },
+    N: { emoji: '🪺', word: 'Nest' },
+    O: { emoji: '🍊', word: 'Orange' },
+    P: { emoji: '🐧', word: 'Penguin' },
+    Q: { emoji: '👸', word: 'Queen' },
+    R: { emoji: '🌈', word: 'Rainbow' },
+    S: { emoji: '☀️', word: 'Sun' },
+    T: { emoji: '🐯', word: 'Tiger' },
+    U: { emoji: '☂️', word: 'Umbrella' },
+    V: { emoji: '🎻', word: 'Violin' },
+    W: { emoji: '🐋', word: 'Whale' },
+    X: { emoji: '🎼', word: 'Xylophone' },
+    Y: { emoji: '🪀', word: 'Yo-yo' },
+    Z: { emoji: '🦓', word: 'Zebra' },
+  };
+
+  const ALPHABET = Object.keys(LETTER_WORDS);
+  let bag = [];
+  let current = '';
+  let correctCount = 0;
+  let incorrectCount = 0;
+
+  function updateScore() {
+    scoreEl.innerHTML = `✓ ${correctCount} &nbsp; ✗ ${incorrectCount}`;
+  }
+
+  function refillBag() {
+    if (randomizeOpt.checked) {
+      bag = [...ALPHABET];
+      for (let i = bag.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [bag[i], bag[j]] = [bag[j], bag[i]];
+      }
+    } else {
+      bag = [...ALPHABET].reverse();
+    }
+  }
+
+  function nextLetter() {
+    if (bag.length === 0) refillBag();
+    if (randomizeOpt.checked && bag[bag.length - 1] === current && bag.length > 1) {
+      [bag[0], bag[bag.length - 1]] = [bag[bag.length - 1], bag[0]];
+    }
+    current = bag.pop();
+    const entry = LETTER_WORDS[current];
+
+    letterEl.textContent = current;
+    emojiEl.textContent = entry.emoji;
+    wordEl.textContent = entry.word;
+
+    const hue = Math.floor(Math.random() * 360);
+    letterEl.style.color = `hsl(${hue}, 60%, 35%)`;
+
+    letterEl.classList.remove('pop');
+    emojiEl.classList.remove('pop');
+    void letterEl.offsetWidth;
+    letterEl.classList.add('pop');
+    emojiEl.classList.add('pop');
+  }
+
+  function markCorrect() {
+    correctCount++;
+    updateScore();
+    nextLetter();
+  }
+
+  function markIncorrect() {
+    incorrectCount++;
+    updateScore();
+    if (reintroduceOpt.checked) {
+      const offsetFromEnd = 2 + Math.floor(Math.random() * 3);
+      const insertAt = Math.max(0, bag.length - offsetFromEnd);
+      bag.splice(insertAt, 0, current);
+    }
+    nextLetter();
+  }
+
+  function sayCurrent() {
+    if (!('speechSynthesis' in window)) return;
+    const u = new SpeechSynthesisUtterance(current.toLowerCase());
+    u.rate = 0.8;
+    u.pitch = 1.1;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(u);
+  }
+
+  correctBtn.addEventListener('click', markCorrect);
+  incorrectBtn.addEventListener('click', markIncorrect);
+  sayBtn.addEventListener('click', sayCurrent);
+
+  try {
+    const savedRandomize = localStorage.getItem('letterQuiz.randomize');
+    const savedReintroduce = localStorage.getItem('letterQuiz.reintroduce');
+    if (savedRandomize !== null) randomizeOpt.checked = savedRandomize === 'true';
+    if (savedReintroduce !== null) reintroduceOpt.checked = savedReintroduce === 'true';
+  } catch (e) {}
+
+  randomizeOpt.addEventListener('change', () => {
+    try { localStorage.setItem('letterQuiz.randomize', randomizeOpt.checked); } catch (e) {}
+    refillBag();
+  });
+  reintroduceOpt.addEventListener('change', () => {
+    try { localStorage.setItem('letterQuiz.reintroduce', reintroduceOpt.checked); } catch (e) {}
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'ArrowRight') {
+      e.preventDefault();
+      markCorrect();
+    } else if (e.code === 'ArrowLeft') {
+      e.preventDefault();
+      markIncorrect();
+    } else if (e.code === 'ArrowUp' || e.code === 'Space') {
+      e.preventDefault();
+      sayCurrent();
+    }
+  });
+
+  refillBag();
+  nextLetter();
+  updateScore();
+</script>
+</body>
+</html>
